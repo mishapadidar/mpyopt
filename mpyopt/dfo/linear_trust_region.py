@@ -1,14 +1,13 @@
 import numpy as np
-from scipy.linalg import qr as rrqr
+from scipy.linalg import null_space
 
-#def linear_trust_region(obj,x0,delta=0.01,eta=1e-5,max_eval=100,delta_max=1.0,delta_min=1e-6,theta=1e-3):
-class linear_trust_region():
-   """
-   Linear trust region method to minimize obj(x)
+class LinearTrustRegion():
+  """
+  Linear trust region method to minimize obj(x)
 
-   At each iteration we build a linear interpolation model of 
-   our objective and minimize within the 2-norm trust region.
-   """
+  At each iteration we build a linear interpolation model of 
+  our objective and minimize within the 2-norm trust region.
+  """
 
   def __init__(self,obj,x0,delta=0.01,eta=1e-5,max_eval=100,delta_max=1.0,delta_min=1e-6,theta=1e-3):
     """
@@ -36,18 +35,18 @@ class linear_trust_region():
     self.gamma_inc = 2.0
 
     # storage
-    self.X = np.zeros((0,dim_x))
+    self.X = np.zeros((0,self.dim_x))
     self.fX = np.zeros(0)
 
-    assert (max_eval > dim_x + 1), "Need more evals"
+    assert (max_eval > self.dim_x + 1), "Need more evals"
     assert delta > 0, "Need larger TR radius"
     assert (delta_min > 0 and delta_min < delta), "Invalid delta_min"
     assert (0 < eta and eta < 1), "Invalid eta"
 
-  def solve():
+  def solve(self):
 
     x0 = np.copy(self.x0)
-    f0 = obj(self.x0)
+    f0 = self.obj(self.x0)
     delta_k = self.delta0
 
     # initial sampling
@@ -56,9 +55,9 @@ class linear_trust_region():
 
     # storage
     self.X  = np.copy(_X)
-    self.X  = np.vstack((X,x0))
+    self.X  = np.vstack((self.X,x0))
     self.fX = np.copy(_fX)
-    self.fX = np.copy(np.append(fX,f0))
+    self.fX = np.copy(np.append(self.fX,f0))
 
     # select the best point to be the center
     idx_best = np.argmin(self.fX)
@@ -68,8 +67,8 @@ class linear_trust_region():
     _X  = np.copy(self.X[idx_other])
     _fX = np.copy(self.fX[idx_other])
 
-    n_evals = len(fX)
-    while n_evals < self.max_eval and delta_k > self.delta_min:
+    self.n_evals = len(self.fX)
+    while self.n_evals < self.max_eval and delta_k > self.delta_min:
       # form the linear model 
       m_k = self.make_model(x_k,f_k,_X,_fX)
       # solve the TR subproblem
@@ -78,7 +77,8 @@ class linear_trust_region():
       x_plus = np.copy(x_k + y_plus)
       # evaluate model and objective
       m_plus = f_k + m_k @ y_plus
-      f_plus = obj(x_plus)
+      f_plus = self.obj(x_plus)
+      self.n_evals += 1
       
       # save eval
       self.X  = np.copy(np.vstack((self.X,x_plus)))
@@ -102,7 +102,7 @@ class linear_trust_region():
         delta_kp1 = delta_k/self.gamma_inc
 
       # get a new model
-      _X,_fX = self.get_model_points(x_kp1,f_kp1,delta_kp1):
+      _X,_fX = self.get_model_points(x_kp1,f_kp1,delta_kp1)
       
       # prepare for next iteration
       x_k = np.copy(x_kp1)
@@ -174,11 +174,7 @@ class linear_trust_region():
     delta of x0. sufficiently affinely independent is determined by a tolerance 
     theta. If such a set of points exists, then our model will be fully linear on 
     a radius delta. 
-    If a full set of n points does not exist, then we look
-    to complete the set by adding sufficiently affinely independent points within a 
-    radius of delta_max. If we complete the set then our model is fully linear on 
-    delta_max.
-    Finally, if we still do not have a complete set we 
+    If we still do not have a complete set we 
     evaluate model improvement points.
     """
     # storage for new displacements
@@ -188,52 +184,38 @@ class linear_trust_region():
     # rows are basis for null(_Y)
     _Z = np.eye(self.dim_x)     
   
+    # default
+    linear = False
+
     # find points within distance delta
-    idx = np.linalg.norm(self.X-x0) <= delta
+    idx = np.linalg.norm(self.X-x0,axis=1) <= delta
     # use shifted points
     Yt   = self.X[idx] - x0
     fYt  = self.fX[idx] - f0
     for jj,dj in enumerate(Yt):
       fj = fYt[jj]
       # check |proj_Z(dj/delta)| >= theta
-      if np.linalg.norm(_Z.T @ (_Z @ dj/delta)) >= theta:
+      if np.linalg.norm(_Z.T @ (_Z @ dj/delta)) >= self.theta:
         _Y  = np.copy(np.vstack((_Y,dj)))
         _fY = np.copy(np.append(_fY,fj))
         # find new null space
         _Z = null_space(_Y).T
-      if len(_Y) = self.dim_x:
+      if len(_Y) == self.dim_x:
         linear = True
         break
       else:
         linear = False
   
-    if linear == False:
-      # find points within distance delta_max but > delta
-      idx = np.logical_and(np.linalg.norm(self.X-x0) <= self.delta_max,\
-            np.linalg.norm(self.X-x0) > delta)
-      # use shifted points
-      Yt   = self.X[idx] - x0
-      fYt  = self.fX[idx] - f0
-      for jj,dj in enumerate(Yt):
-        fj = fYt[jj]
-        # check |proj_Z(dj/delta)| >= theta
-        if np.linalg.norm(_Z.T @ (_Z @ dj/delta)) >= theta:
-          _Y  = np.copy(np.vstack((_Y,dj)))
-          _fY = np.copy(np.append(_fY,fj))
-          # find new null space
-          _Z = null_space(_Y).T
-        if len(_Y) = self.dim_x:
-          linear = True
-          break
-        else:
-          linear = False
-  
     # now propose new points
     if linear == False:
       # evaluate f(Z)
-      _fZ = np.array([obj(x0 + delta*zz) for zz in _Z]) - f0
-      _Y = np.vstack((_Y,_Z))
+      _fZ = np.array([self.obj(x0 + delta*zz) for zz in _Z]) - f0
+      _Y = np.vstack((_Y,delta*_Z))
       _fY = np.append(_fY,_fZ)
+      # save the new evals
+      self.n_evals += len(_fZ)
+      self.X  = np.copy(np.vstack((self.X, x0 + delta*_Z)))
+      self.fX = np.copy(np.append(self.fX, f0 + _fZ))
 
     # return interpolation points
     _X = np.copy(x0 + _Y)

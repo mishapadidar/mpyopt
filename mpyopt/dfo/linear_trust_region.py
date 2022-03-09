@@ -38,6 +38,10 @@ class LinearTrustRegion():
     self.X = np.zeros((0,self.dim_x))
     self.fX = np.zeros(0)
 
+    # for ill-conditioning
+    self.n_fails = 0
+    self.max_fails = 3
+
     assert (max_eval > self.dim_x + 1), "Need more evals"
     assert delta > 0, "Need larger TR radius"
     assert (delta_min > 0 and delta_min < delta), "Invalid delta_min"
@@ -103,7 +107,7 @@ class LinearTrustRegion():
 
       # get a new model
       _X,_fX = self.get_model_points(x_kp1,f_kp1,delta_kp1)
-      
+
       # prepare for next iteration
       x_k = np.copy(x_kp1)
       f_k = f_kp1
@@ -137,7 +141,24 @@ class LinearTrustRegion():
     # shift the function values
     _fY = _fX - f0
     # interpolate
-    m = np.linalg.solve(_Y,_fY)
+    try:
+      m = np.linalg.solve(_Y,_fY)
+    except:
+      # jitter if unstable
+      _Y = self.jitter(_Y)
+      self.n_fails +=1 
+      # increase theta to prevent more fails
+      self.theta = 10*self.theta
+      if self.n_fails >= self.max_fails:
+        print("Exiting: Too many failed solves")
+        print("Try increasing theta")
+        result = {}
+        result['x']   = x0
+        result['f']   = f0
+        result['X']   = np.copy(self.X)
+        result['fX']  = np.copy(self.fX)
+        return x0
+      m = np.linalg.solve(_Y,_fY)
     return np.copy(m)
 
   def solve_subproblem(self,m,delta):
@@ -222,4 +243,18 @@ class LinearTrustRegion():
     _fX = np.copy(f0 + _fY)
   
     return _X,_fX
+
+
+  def jitter(self,A,jit=1e-10):
+    """
+    Add a "jitter" to the matrix
+  
+    input
+    A: (n,n) matrix
+
+    return 
+    (n,n) matrix, A + jit*np.eye(n)
+    """
+    return np.copy(A + jit*np.eye(len(A)))
+    
   

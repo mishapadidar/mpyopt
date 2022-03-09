@@ -2,7 +2,7 @@ import numpy as np
 from optimization_problem import OptimizationProblem
 import cvxpy as cp
 
-class ConvexQuadratic(OptimizationProblem):
+class QPBound(OptimizationProblem):
     """Class for bound constrained convex quadratic optimization problems:
        min (x-x0) @ A @ (x-x0)
        s.t x in [lb,ub]

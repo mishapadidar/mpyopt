@@ -1,7 +1,7 @@
 import random
 import numpy as np
 
-def BlockCoordinateGaussNewton(resid,jac,x0,block_size=1,max_iter=1000,gtol=1e-5,gamma_dec=0.5,c_1=1e-4,alpha_min=1e-16,verbose=False):
+def BlockCoordinateGaussNewton(resid,jac,x0,block_size=1,max_iter=1000,gtol=1e-5,gamma_dec=0.5,c_1=1e-4,alpha_min=1e-16,method='stochastic',verbose=False):
   """
   A stochastic block coordinate Gauss Newton method with linesearch to solve nonlinear least squares
     min sum_i resid_i(x)**2
@@ -27,6 +27,7 @@ def BlockCoordinateGaussNewton(resid,jac,x0,block_size=1,max_iter=1000,gtol=1e-5
   block_size: int, number of coordinates to descend on per step, must be <= dim
   c_1: Armijo parameters for linesearch.
            must satisfy 0 < c_1 < c_2 < 1
+  method: str, cyclic or stochastic coordinate selection.
   """
   assert (0 < c_1 and c_1< 1), "unsuitable linesearch parameters"
 
@@ -43,7 +44,11 @@ def BlockCoordinateGaussNewton(resid,jac,x0,block_size=1,max_iter=1000,gtol=1e-5
   while stop==False:
 
     # compute search direction
-    idx_k = random.sample(range(dim),block_size) # random indexes
+    if method == 'stochastic':
+      idx_k = random.sample(range(dim),block_size) # random indexes
+    elif method == 'cyclic':
+      idx_start = nn*block_size%(dim)
+      idx_k = [(idx_start + jj)%(dim) for jj in range(block_size)]
     J_k = np.copy(jac(x_k,idx_k))
     Q,R = np.linalg.qr(J_k)
     r_k = np.copy(resid(x_k))

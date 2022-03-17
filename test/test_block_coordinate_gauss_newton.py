@@ -21,7 +21,7 @@ def test_1():
   x0    = 10*np.ones(dim_x)
   max_iter = 100
   gtol     = 1e-5
-  block_size = 2
+  block_size = dim_x-1
   xopt = BlockCoordinateGaussNewton(resid,jac,x0,block_size,max_iter,gtol,verbose=False)
   print('Test 1: distance to opt: ',np.linalg.norm(xopt - c))
   return xopt
@@ -40,10 +40,10 @@ def test_2():
   resid = lambda m: (X @ m  - Y)
   jac   = lambda m,idx: X[:,idx] # define for block
 
-  x0    = 10*np.ones(dim_x)
-  max_iter = 100
+  x0    = c + 10*np.random.randn(dim_x) 
+  max_iter = 500
   gtol     = 1e-5
-  block_size = 8
+  block_size = 10
   xopt = BlockCoordinateGaussNewton(resid,jac,x0,block_size,max_iter,gtol,verbose=False)
   print('Test 2: distance to opt: ',np.linalg.norm(xopt - c))
   return xopt
@@ -78,7 +78,7 @@ def test_3():
   x0    = c + 10*np.random.randn(dim_x) 
   max_iter = 1000
   gtol     = 1e-5
-  block_size= 8
+  block_size= dim_x
   xopt = BlockCoordinateGaussNewton(resid,jac,x0,block_size,max_iter,gtol,verbose=False)
   print('Test 3: distance to opt: ',np.linalg.norm(xopt - c))
   return xopt

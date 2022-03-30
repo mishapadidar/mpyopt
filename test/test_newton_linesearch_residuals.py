@@ -1,7 +1,7 @@
 import numpy as np
 import sys
-sys.path.append("../mpyopt/second_order")
-from newton_linesearch import NewtonLinesearch
+sys.path.append("../mpyopt/nonlinear_equations")
+from newton_linesearch_residuals import NewtonLinesearchResiduals
 
 
 def test_1():
@@ -17,7 +17,7 @@ def test_1():
 
   x0    = np.zeros(dim_x)
   max_iter = 1
-  xopt = NewtonLinesearch(F,H,x0,max_iter,verbose=True)
+  xopt = NewtonLinesearchResiduals(F,H,x0,max_iter,verbose=True)
   print('Test 1: distance to opt: ',np.linalg.norm(xopt - c))
   return xopt
 
@@ -58,7 +58,7 @@ def test_2():
   x0    = np.zeros(dim_x+dim_c)
   max_iter = 100
   ftarget = 1e-12
-  yopt = NewtonLinesearch(F,H,x0,max_iter=max_iter,ftarget=ftarget,verbose=True)
+  yopt = NewtonLinesearchResiduals(F,H,x0,max_iter=max_iter,ftarget=ftarget,verbose=True)
   xopt = yopt[:dim_x]
   print('Test 2: distance to opt: ',np.linalg.norm(xopt - c))
   return xopt

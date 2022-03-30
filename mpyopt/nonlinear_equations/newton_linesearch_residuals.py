@@ -3,7 +3,7 @@ import numpy as np
 from scipy.linalg import lu as plu_decomp
 
 
-def NewtonLinesearch(F,H,x0,max_iter=1000,ftarget=0.0,gamma_dec=0.5,c_1=1e-4,alpha_min=1e-10,verbose=False):
+def NewtonLinesearchResiduals(F,H,x0,max_iter=1000,ftarget=0.0,gamma_dec=0.5,c_1=1e-4,alpha_min=1e-10,verbose=False):
   """
   Newtons method to solve 
     F(x) = 0

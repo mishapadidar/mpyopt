@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize as sp_minimize
 import sys
 sys.path.append("../mpyopt/problem")
 from quadratic import Quadratic
@@ -31,6 +32,14 @@ def test_1():
   fX = res['fX']
   plt.plot(fX,label='SID-PSM')
 
+  fX = []
+  def evw(x):
+    f = prob.eval(x)
+    fX.append(f)
+    return f
+  res = sp_minimize(evw,x0,method='Nelder-Mead')
+  plt.plot(fX,label='nelder-mead')
+
   ltr = LinearTrustRegion(prob.eval,x0,max_eval=max_eval,delta_min=delta_min)
   res = ltr.solve()
   fX = res['fX']
@@ -60,6 +69,14 @@ def test_2():
   print('Test 2: best value found: ',f_res)
   fX = res['fX']
   plt.plot(fX,label='SID-PSM')
+
+  fX = []
+  def evw(x):
+    f = obj(x)
+    fX.append(f)
+    return f
+  res = sp_minimize(evw,x0,method='Nelder-Mead')
+  plt.plot(fX,label='nelder-mead')
 
   ltr = LinearTrustRegion(obj,x0,max_eval=max_eval,delta_min=delta_min)
   res = ltr.solve()
@@ -97,6 +114,14 @@ def test_3():
   fX = res['fX']
   plt.plot(fX,label='SID-PSM')
 
+  fX = []
+  def evw(x):
+    f = prob.eval(x)
+    fX.append(f)
+    return f
+  res = sp_minimize(evw,x0,method='Nelder-Mead')
+  plt.plot(fX,label='nelder-mead')
+
   ltr = LinearTrustRegion(prob.eval,x0,max_eval=max_eval,delta = delta0,delta_min=delta_min,delta_max=delta_max)
   res = ltr.solve()
   fX = res['fX']
@@ -129,6 +154,14 @@ def test_4():
   fX = res['fX']
   plt.plot(fX,label='SID-PSM')
 
+  fX = []
+  def evw(x):
+    f = prob.eval(x)
+    fX.append(f)
+    return f
+  res = sp_minimize(evw,x0,method='Nelder-Mead')
+  plt.plot(fX,label='nelder-mead')
+
   ltr = LinearTrustRegion(prob.eval,x0,max_eval=max_eval,delta = delta0,delta_min=delta_min,delta_max=delta_max)
   res = ltr.solve()
   fX = res['fX']
@@ -158,8 +191,10 @@ def test_5():
 
   max_eval = 500
   delta_min = 1e-8
+  delta_max=10.0
   ftarget = 1e-12
-  sid = SIDPSM(obj,x0,max_eval=max_eval,delta_min=delta_min)
+  delta0 = 0.1
+  sid = SIDPSM(obj,x0,max_eval=max_eval,delta=delta0,delta_min=delta_min,delta_max=delta_max)
   res = sid.solve()
   #mnh = MinimumNormHessian(prob.eval,x0,max_eval=max_eval,delta_min=delta_min,ftarget=ftarget)
   #res = mnh.solve()
@@ -168,14 +203,24 @@ def test_5():
   print('Test 5: distance to opt: ',np.linalg.norm(x_res-xopt))
   print('Test 5: best value found: ',f_res)
   fX = res['fX']
-  plt.plot(fX,label='SID-PSM')
+  #plt.plot(fX,label='SID-PSM')
+  plt.plot(np.minimum.accumulate(fX),label='SID-PSM')
+  
+  fX = []
+  def evw(x):
+    f = obj(x)
+    fX.append(f)
+    return f
+  res = sp_minimize(evw,x0,method='Nelder-Mead')
+  #plt.plot(fX,label='nelder-mead')
+  plt.plot(np.minimum.accumulate(fX),label='nelder-mead')
 
-  ltr = LinearTrustRegion(obj,x0,max_eval=max_eval,delta_min=delta_min)
+  ltr = LinearTrustRegion(obj,x0,max_eval=max_eval,delta=delta0,delta_min=delta_min,delta_max=delta_max)
   res = ltr.solve()
   fX = res['fX']
-  plt.plot(fX,label='LTR')
+  #plt.plot(fX,label='LTR')
+  plt.plot(np.minimum.accumulate(fX),label='LTR')
 
-  from scipy.optimize import minimize as sp_minimize
   res = sp_minimize(prob.eval,x0=x0,method='L-BFGS-B',bounds=bounds)
   fopt = obj(res.x)
   plt.axhline(y=fopt, color='r', linestyle='-',label='optimum')
@@ -183,8 +228,8 @@ def test_5():
   plt.show()
   return res['x']
 
-#test_1()
-#test_2()
-#test_3()
-#test_4()
+test_1()
+test_2()
+test_3()
+test_4()
 test_5()

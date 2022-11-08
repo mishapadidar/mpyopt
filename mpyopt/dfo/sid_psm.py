@@ -120,6 +120,11 @@ class SIDPSM():
           # sort the polling points according to the linear model on the expanded TR
           m_k = self.make_model(x_k,f_k,_X,_fX)
           val = pos_basis @ m_k
+
+        # TODO: poll step should be aware of the simulation failures
+        # to improve the sampling scheme similar to nelder-mead.
+        #
+
         # sort the postive spanning set
         idx_sort = np.argsort(val)
         pos_basis_k = np.copy(pos_basis[idx_sort])
@@ -141,8 +146,6 @@ class SIDPSM():
           # 
           # break if decrease is found
           if f_plus < f_k:            
-            print('polled ',c)
-            print(f_k-f_plus)
             success=True
             break
 

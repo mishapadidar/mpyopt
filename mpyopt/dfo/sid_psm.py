@@ -3,7 +3,7 @@ from scipy.linalg import null_space
 
 class SIDPSM():
   """
-  The SID-PSM direct search method for incorporating minimum norm hessian
+  The SID-PSM direct search method for incorporating linear
   models in the direct search procedure. See 
   "Incorporating minimum Frobenius norm models in direct search" - Custudio 2009
   "Using sampling and simplex derivatives in pattern search methods" - Custudio 2007
@@ -135,6 +135,10 @@ class SIDPSM():
           self.fX = np.copy(np.append(self.fX,f_plus))
           self.n_evals +=1
           c += 1
+          # TODO:
+          # we should be selecting our point to satisfy a sufficient decrease condition
+          # otherwise convergence will be slow!
+          # 
           # break if decrease is found
           if f_plus < f_k:            
             print('polled ',c)
